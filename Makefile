@@ -5,10 +5,10 @@ all: out/DailyYield/2020.csv out/BatchData
 %.csv: %.json
 	cat $< | json2csv > $@
 
-out/DailyYield/%.json: out/curl.config out/BatchData.json
+out/DailyYield/%.json: out/BatchData/ACC.json out/curl.config
 	mkdir -p `dirname $@`
-	curl "$(API_ROOT)/Account/GetAccountDailyYields?accountKey=$(shell jq -r ".[] | select(.b == \"ACC\") | .a[0]._k" < out/BatchData.json)&year=$*" \
-	    -K $< > $@
+	curl "$(API_ROOT)/Account/GetAccountDailyYields?accountKey=$(shell jq -r '.[0].a._k' < $<)&year=$*" \
+	    -K out/curl.config > $@
 
 out/BatchData/%.json: out/BatchData.json
 	mkdir -p $(@D)
