@@ -15,7 +15,7 @@ out/BatchData/%.json: out/BatchData.json
 	cat $< | jq '.[] | select(.b == "$*") | .a' > $@
 
 out/BatchData: out/BatchData.json
-	$(MAKE) $(shell echo $@/{$(shell cat $< | jq -r 'map(.b)[]' | head | paste -sd , -)}.csv)
+	@$(MAKE) $(shell echo $@/{$(shell cat $< | jq -r 'map(.b)[]' | paste -sd , -)}.csv)
 
 out/PersonalUserData.json: out/curl.config
 	curl $(API_ROOT)/UserPersonalization/GetUserData -K $< | jq > $@
@@ -42,4 +42,4 @@ out/AuthResult.json: credentials.json
 clean:
 	rm -r out/*
 
-.PHONY: clean
+.PHONY: clean out/BatchData
