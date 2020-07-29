@@ -35,6 +35,10 @@ out/DataProvider/GetStaticData/%.json: out/DataProvider/GetStaticData.json
 out/DataProvider/GetStaticData: out/DataProvider/GetStaticData.json
 	@$(MAKE) $(shell echo $@/{$(shell cat $< | jq -r 'map(.b)[]' | paste -sd , -)}.csv)
 
+out/dividend_calendar.ics: templates/icalendar.jinja2
+	psql -t -A -c "select json_build_object('events',json_agg(row_to_json(a))) from ordernet.calendar_events a;" \
+	    | jinja2 $< -o $@
+
 out/%.json: out/curl.config
 	mkdir -p $(@D)
 	curl $(API_ROOT)/$* -K $< > $@
