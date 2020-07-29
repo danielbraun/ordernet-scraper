@@ -7,7 +7,7 @@ all: \
     out/Account/GetHoldings.csv \
     out/DailyYield/2020.csv
 
-%.csv: %.json; json2csv < $< > $@
+%.csv: %.json; cat $< | json2csv | csvformat > $@
 
 out/accountKey: out/DataProvider/GetStaticData/ACC.json
 	jq -r '.[0].a._k' < $< > $@
