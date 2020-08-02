@@ -5,12 +5,23 @@ all: \
     out/DataProvider/GetStaticData.json \
     out/UserPersonalization/GetStatus.json \
     out/Account/GetHoldings.csv \
+    out/Account/GetAccountTransactions.csv \
     out/DailyYield/2020.csv
 
 %.csv: %.json; cat $< | json2csv | csvformat > $@
 
 out/accountKey: out/DataProvider/GetStaticData/ACC.json
 	jq -r '.[0].a._k' < $< > $@
+
+out/Account/GetAccountTransactions.json: out/curl.config out/accountKey
+	@mkdir -p $(@D)
+	curl $(API_ROOT)/Account/GetAccountTransactions \
+	    -G \
+	    --data-urlencode 'accountKey=$(shell cat out/accountKey)' \
+	    --data-urlencode 'startDate=$(shell gdate -Iseconds -u -d "-1 year")' \
+	    --data-urlencode 'endDate=$(shell gdate -Iseconds -u)' \
+	    -K $< \
+	    -o $@
 
 out/Account/%.json: out/curl.config out/accountKey
 	@mkdir -p $(@D)
