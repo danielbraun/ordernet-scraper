@@ -27,6 +27,28 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: GetAccountTransactions; Type: TABLE; Schema: ordernet; Owner: -
+--
+
+CREATE TABLE ordernet."GetAccountTransactions" (
+    _t character varying NOT NULL,
+    a numeric NOT NULL,
+    b timestamp without time zone,
+    c numeric NOT NULL,
+    d numeric NOT NULL,
+    e numeric NOT NULL,
+    f character varying NOT NULL,
+    i numeric NOT NULL,
+    j character varying NOT NULL,
+    k numeric NOT NULL,
+    l numeric NOT NULL,
+    m numeric NOT NULL,
+    n numeric NOT NULL,
+    o numeric NOT NULL
+);
+
+
+--
 -- Name: GetHoldings; Type: TABLE; Schema: ordernet; Owner: -
 --
 
@@ -96,6 +118,47 @@ CREATE TABLE ordernet."GetHoldings" (
 
 
 --
+-- Name: incoming_dividends; Type: VIEW; Schema: ordernet; Owner: -
+--
+
+CREATE VIEW ordernet.incoming_dividends AS
+ SELECT split_part(("GetHoldings".i)::text, ' '::text, 1) AS symbol,
+    to_date(("GetHoldings".o)::text, 'YYYYMMDD'::text) AS ex_date,
+    to_date(("GetHoldings".p)::text, 'YYYYMMDD'::text) AS payment_date,
+    (("GetHoldings".be / "GetHoldings".bb))::money AS amount,
+    (("GetHoldings".bh / "GetHoldings".bb))::money AS tax,
+    "GetHoldings".bb AS usd_ils
+   FROM ordernet."GetHoldings" "GetHoldings"
+  WHERE ("GetHoldings".d = (7)::numeric)
+  ORDER BY (to_date(("GetHoldings".p)::text, 'YYYYMMDD'::text)), (to_date(("GetHoldings".o)::text, 'YYYYMMDD'::text));
+
+
+--
+-- Name: calendar_events; Type: VIEW; Schema: ordernet; Owner: -
+--
+
+CREATE VIEW ordernet.calendar_events AS
+ SELECT to_char((incoming_dividends.payment_date)::timestamp with time zone, 'yyyyMMdd'::text) AS dtstart,
+    format('Dividend: %s by %s'::text, incoming_dividends.amount, incoming_dividends.symbol) AS summary
+   FROM ordernet.incoming_dividends;
+
+
+--
+-- Name: past_dividends; Type: VIEW; Schema: ordernet; Owner: -
+--
+
+CREATE VIEW ordernet.past_dividends AS
+ SELECT "GetAccountTransactions".a AS account,
+    ("GetAccountTransactions".b)::date AS paid_on,
+    split_part(("GetAccountTransactions".f)::text, ' '::text, 1) AS symbol,
+    (("GetAccountTransactions".i * 0.75))::money AS amount,
+    (("GetAccountTransactions".i)::double precision * (0.25)::money) AS tax
+   FROM ordernet."GetAccountTransactions"
+  WHERE (("GetAccountTransactions".j)::text = 'הפ/דיב'::text)
+  ORDER BY "GetAccountTransactions".b DESC;
+
+
+--
 -- Name: portfolio_export; Type: VIEW; Schema: ordernet; Owner: -
 --
 
@@ -103,7 +166,7 @@ CREATE VIEW ordernet.portfolio_export AS
  SELECT split_part(("GetHoldings".i)::text, ' '::text, 1) AS "Ticker",
     "GetHoldings".bd AS "Quantity",
     ("GetHoldings".bi / "GetHoldings".bd) AS "Cost Per Share"
-   FROM ordernet."GetHoldings"
+   FROM ordernet."GetHoldings" "GetHoldings"
   WHERE (("GetHoldings".l = (12)::numeric) AND ("GetHoldings".m = (12)::numeric))
   ORDER BY (split_part(("GetHoldings".i)::text, ' '::text, 1));
 
