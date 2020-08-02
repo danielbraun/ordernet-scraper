@@ -43,8 +43,8 @@ out/%.json: out/curl.config
 	mkdir -p $(@D)
 	curl $(API_ROOT)/$* -K $< > $@
 
-out/curl.config: out/AuthResult.json
-	printf -- '-f\n-H "Authorization: Bearer %s"' $(shell jq ".l" -r < $<) > $@
+out/curl.config: templates/curl.jinja2 out/AuthResult.json
+	jinja2 $^ -o $@
 
 out/AuthResult.json: credentials.json
 	mkdir -p $(@D)
