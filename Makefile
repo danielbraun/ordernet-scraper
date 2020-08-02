@@ -64,6 +64,7 @@ out/AuthResult.json: credentials.json
 	    --data-binary @$< \
 	    -H "Content-Type: application/json" \
 	    > $@
+	jq -e '.a != "ServerNotReady"' < out/AuthResult.json
 
 clean:
 	rm -r out/*
