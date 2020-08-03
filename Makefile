@@ -5,8 +5,11 @@ all: \
     out/DataProvider/GetStaticData.json \
     out/UserPersonalization/GetStatus.json \
     out/Account/GetHoldings.csv \
+    out/Account/GetHoldings.psql.csv \
     out/Account/GetAccountTransactions.csv \
-    out/DailyYield/2020.csv
+    out/Account/GetAccountTransactions.psql.csv \
+    out/DailyYield/2020.csv \
+    ordernet.schema.psql.sql
 
 %.csv: %.json; cat $< | json2csv | csvformat > $@
 
@@ -69,4 +72,19 @@ out/AuthResult.json: credentials.json
 clean:
 	rm -r out/*
 
+%.html: %.sql
+	cat $< | psql --html -o $@
+
+%.schema.psql.sql:
+	pg_dump \
+	    --no-owner \
+	    --no-privileges \
+	    --schema-only \
+	    -n $(shell basename $*) \
+	    > $@
+
+%.psql.csv: %.csv
+	echo "begin; truncate :table; copy :table from '$(shell realpath $<)' csv header; copy :table to stdout csv header; commit;" | psql \
+	    -v table=ordernet.\"$(shell basename $*)\" \
+	    -o $@
 .PHONY: clean
